@@ -31,6 +31,8 @@ module.exports =
     pass: "test"
   redis:
     host: "127.0.0.1"
+    port: 6379
+    db: 0
 
   admin:
     # 管理者権限を行使する際のパスワード
