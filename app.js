@@ -80,8 +80,8 @@ ss.client.formatters.add(require('ss-stylus'));
 ss.client.templateEngine.use(require('ss-clientjade'));
 
 ss.client.set({ liveReload: false });
-ss.session.store.use('redis', { host: Config.redis.host });
-ss.publish.transport.use('redis', { host: Config.redis.host });
+ss.session.store.use('redis', { host: Config.redis.host, port: Config.redis.port, db: Config.redis.db });
+ss.publish.transport.use('redis', { host: Config.redis.host, port: Config.redis.port, db: Config.redis.db });
 
 /**
  * Whether this run is in production mode.
