@@ -150,13 +150,6 @@ export const TopPage = ({ i18n, onLogin, onSignup }: Props) => {
           <Features i18n={i18n} ref={featuresSectionRef} />
         </ContentsWrapper>
         <Footer>
-          <p>
-            {i18n.t('top_client:footer.text')} (
-            <a href="http://github.com/uhyo/jinrou" target="_blank">
-              {i18n.t('top_client:footer.github')}
-            </a>
-            )
-          </p>
         </Footer>
       </AppWrapper>
     </I18nProvider>
