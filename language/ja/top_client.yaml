@@ -26,10 +26,6 @@ signup:
     manualLink: '禁止行為・注意事項'
 
 footer:
-  # footer text.
-  text: '© 2011-2019 うひょ'
-  # GitHub label
-  github: 'GitHub'
 
 featuresTitle: 月下人狼の特徴
 # contents of top page.
