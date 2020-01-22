@@ -1855,7 +1855,7 @@ class Game
                     @i18n.t "found.leave", {name: x.name}
                 when "deathnote"
                     @i18n.t "found.body", {name: x.name}
-                when "foxsuicide", "friendsuicide", "twinsuicide", "dragonknightsuicide","vampiresuicide"
+                when "foxsuicide", "friendsuicide", "twinsuicide", "dragonknightsuicide","vampiresuicide","santasuicide"
                     @i18n.t "found.suicide", {name: x.name}
                 when "infirm"
                     @i18n.t "found.infirm", {name: x.name}
@@ -1880,7 +1880,7 @@ class Game
                 if ["werewolf","werewolf2","trickedWerewolf","poison","hinamizawa",
                     "vampire","vampire2","witch","dog","trap",
                     "marycurse","psycho","curse","punish","spygone","deathnote",
-                    "foxsuicide","friendsuicide","twinsuicide","dragonknightsuicide","vampiresuicide",
+                    "foxsuicide","friendsuicide","twinsuicide","dragonknightsuicide","vampiresuicide","santasuicide"
                     "infirm","hunter",
                     "gmpunish","gone-day","gone-night","crafty","greedy","tough","lunaticlover",
                     "hooligan","dragon","samurai","elemental","sacrifice"
@@ -1930,6 +1930,8 @@ class Game
                         "dragonknightsuicide"
                     when "vampiresuicide"
                         "vampiresuicide"
+                    when "santasuicide"
+                        "santasuicide"
                     when "hooligan"
                         "hooligan"
                     when "dragon"
@@ -2307,7 +2309,7 @@ class Game
             if team=="Werewolf" && wolves==1
                 # 一匹狼判定
                 lw=aliveps.filter((x)->x.isWerewolf())[0]
-                if lw?.isJobType "LoneWolf"
+                if lw?.getTeam() == "LoneWolf"
                     team="LoneWolf"
 
             if team?
@@ -3217,6 +3219,8 @@ class Player
         draculas: false
         # ドラキュラに吸血された人
         draculaBitten: false
+        # サンタクロース
+        santaclauses: false
     }
     # 汎用的な役職属性取得関数 (Existential)
     getAttribute:(attr, game)->false
@@ -6710,9 +6714,11 @@ class FrankensteinsMonster extends Player
             for newtype in extracted
                 subpl = Player.factory newtype, game
                 @transProfile subpl
+                @transferData subpl
 
                 newpl=Player.factory null, game, targetpl, subpl, Complex    # 合成する
                 @transProfile newpl
+                @transferData newpl
 
                 # 置き換える
                 targetpl = newpl
@@ -6872,6 +6878,28 @@ class SantaClaus extends Player
         super
         @setFlag "[]"
     isWinner:(game,team)->@flag=="gone" || super
+    hasDeadResistance:(game)->
+        # トナカイがいれば死亡耐性あり
+        reindeers = game.players.filter (x)-> !x.dead && x.isJobType "Reindeer"
+        return reindeers.length > 0
+    checkDeathResistance:(game, found, from)->
+        # 狼の襲撃・ヴァンパイアの襲撃・魔女の毒薬はトナカイが身代わり可能
+        if Found.isNormalWerewolfAttack(found) || Found.isNormalVampireAttack(found) || found in ["witch"]
+            reindeers = game.players.filter (x)-> !x.dead && x.isJobType "Reindeer"
+            if reindeers.length > 0
+                reindeers = shuffle reindeers
+                victim = reindeers[0]
+                if Found.isNormalWerewolfAttack found
+                    victim.die game, "werewolf2", from
+                    game.addGuardLog @id, AttackKind.werewolf, GuardReason.cover
+                else if Found.isNormalVampireAttack(found)
+                    victim.die game, "vampire2", from
+                else
+                    victim.die game, found, from
+                victim.addGamelog game, "reindeervictim"
+                @addGamelog game, "santaavoid"
+                return true
+        return false
     sunset:(game)->
         # まだ届けられる人がいるかチェック
         if @flag == "gone"
@@ -8287,6 +8315,7 @@ class BlackCat extends Madman
 class Idol extends Player
     type:"Idol"
     formType: FormType.required
+    midnightSort:80
     sunset:(game)->
         super
         if !@flag
@@ -9701,10 +9730,10 @@ class AbsoluteWolf extends Werewolf
             # If this is a gone death, do not guard.
             return false
         # 陣営変化していたら喪失
-        if @getTeam() != "Werewolf"
+        me = game.getPlayer @id
+        if me.getTeam() != "Werewolf"
             return false
         # 追加勝利も許さない
-        me = game.getPlayer @id
         if me.isCmplType("HooliganMember") || me.isCmplType("LunaticLoved")
             return false
         # 残りの狼の数と絶対狼の数が一致していたら喪失
@@ -9784,6 +9813,341 @@ class Oracle extends Player
                 comment: game.i18n.t "roles:Oracle.werewolf", {name: @name}
         if @flag? && @flag != "none"
             splashlog game.id,game,log
+
+class NightRabbit extends Fox
+    type:"NightRabbit"
+    isListener:(game,log)->
+        if log.mode=="werewolf"
+            true
+        else super
+
+class GachaAddicted extends Player
+    type:"GachaAddicted"
+    midnightSort: 122
+    constructor:->
+        super
+        @setFlag {
+            # "unused": まだノーマルガチャ引いていない
+            # "used": ノーマルガチャ引いた
+            # "transforming": この役職に変化する
+            status: "unused"
+            # 残り票数
+            votes: 1
+            # 消費した票数
+            spent: 0
+            # 所持役職
+            job: null
+        }
+    sleeping:->true
+    jobdone:-> !@flag? || @flag.status == "transforming"
+    sunset:(game)->
+        # ガチャを初期化
+        lastVote = game.votingbox.getHisVote this
+        nextVotes = lastVote?.power ? 1
+        lastSpent = @flag?.spent ? 0
+        @setFlag {
+            status: "unused"
+            votes: nextVotes + lastSpent
+            spent: 0
+            job: null
+        }
+    job:(game, playerid, query)->
+        unless @flag?
+            # ???
+            return game.i18n.t "error.common.cannotUseSkillNow"
+        unless query.commandname in ["normal", "premium", "commit"]
+            return game.i18n.t "error.common.invalidSelection"
+        if @flag.status == "transforming"
+            return game.i18n.t "error.common.alreadyUsed"
+
+        if query.commandname == "normal" && @flag.status != "unused"
+            # ノーマルガチャ使用済
+            return game.i18n.t "error.common.alreadyUsed"
+        if query.commandname == "premium" && @flag.votes <= 0
+            # 課金する金がない
+            return game.i18n.t "error.common.alreadyUsed"
+        if query.commandname == "commit" && !@flag.job?
+            # まだガチャを引いていない
+            return game.i18n.t "error.common.cannotUseSkillNow"
+
+        if query.commandname in ["normal", "premium"]
+            # ガチャを引く
+            if query.commandname == "normal"
+                gachaTable = [[0.5, 1], [0.9, 2], [0.99, 3], [0.997, 4], [1, 5]]
+            else
+                gachaTable = [[0.9, 3], [0.98, 4], [0.998, 5], [1, 6]]
+            gachaPosition = Math.random()
+            # 引いたレア度を判定
+            gachaRarity = 1
+            for [max, lv] in gachaTable
+                if gachaPosition < max
+                    gachaRarity = lv
+                    break
+            # 役職を判定
+            candidates = Shared.game.gachaData[gachaRarity]
+            r = Math.floor Math.random() * candidates.length
+            job = candidates[r]
+
+            if query.commandname == "normal"
+                @setFlag {
+                    status: "used"
+                    votes: @flag.votes
+                    spent: @flag.spent
+                    job: job
+                }
+            else
+                @setFlag {
+                    status: @flag.status
+                    votes: @flag.votes - 1
+                    spent: @flag.spent + 1
+                    job: job
+                }
+
+            # ガチャ結果表示
+            log=
+                mode: "skill"
+                to: @id
+                comment: game.i18n.t "roles:GachaAddicted.gacha", {
+                    name: @name
+                    gachaType: game.i18n.t "roles:GachaAddicted.type.#{query.commandname}"
+                    rarity: "★".repeat gachaRarity
+                    jobname: game.i18n.t "roles:jobname.#{job}"
+                }
+            splashlog game.id, game, log
+            return null
+        else
+            # 変化
+            @setFlag {
+                status: "transforming"
+                votes: @flag.votes
+                spent: @flag.spent
+                job: @flag.job
+            }
+            log=
+                mode: "skill"
+                to: @id
+                comment: game.i18n.t "roles:GachaAddicted.commit", {
+                    name: @name
+                    jobname: game.i18n.t "roles:jobname.#{@flag.job}"
+                }
+            splashlog game.id, game, log
+            return null
+
+    midnight:(game)->
+        if @flag?.status == "transforming"
+            # 実際に変化する
+            newpl = Player.factory @flag.job, game
+            @transProfile newpl
+            @transferData newpl, true
+            # 票を消費した場合はそのフラグを建てる
+            if @flag.spent > 0
+                newpl = Player.factory null, game, newpl, null, SpentVotesForGacha
+                @transProfile newpl
+                @transferData newpl, true
+                newpl.cmplFlag = @flag.spent
+            @transform game, newpl, false
+
+            log=
+                mode: "skill"
+                to: @id
+                comment: game.i18n.t "system.changeRole", {
+                    name: @name
+                    result: newpl.getJobDisp()
+                }
+
+            splashlog game.id, game, log
+        else
+            if @flag?.spent > 0
+                # 票の消費だけ
+                top = game.getPlayer @id
+                newpl = Player.factory null, game, top, null, SpentVotesForGacha
+                newpl.cmplFlag = @flag.spent
+                @transProfile newpl
+                @transferData newpl, true
+                @transform game, newpl, true
+    isFormTarget:(jobtype)->
+        (jobtype in ["GachaAddicted_Normal", "GachaAddicted_Premium", "GachaAddicted_Commit"]) || super
+
+    getOpenForms:(game)->
+        if Phase.isNight(game.phase) && !@dead
+            res = []
+            if @flag?.status == "unused"
+                # ノーマルガチャの権利がある
+                res.push {
+                    type: "GachaAddicted_Normal"
+                    options: []
+                    formType: FormType.optional
+                    objid: @objid
+                }
+            if @flag?.votes > 0
+                # プレミアムガチャ
+                res.push {
+                    type: "GachaAddicted_Premium"
+                    options: []
+                    formType: FormType.optional
+                    objid: @objid
+                    data: {
+                        votes: @flag.votes
+                    }
+                }
+            if @flag?.job?
+                # 変化できる
+                res.push {
+                    type: "GachaAddicted_Commit"
+                    options: []
+                    formType: FormType.optional
+                    objid: @objid
+                    data: {
+                        job: @flag.job
+                    }
+                }
+            return res
+        else
+            return super
+    makeJobSelection:(game, isvote)->
+        if !isvote
+            return []
+        else
+            super
+
+class Fate extends Player
+    type:"Fate"
+    midnightSort:122
+    getTypeDisp:->
+        if @flag == "done"
+            super
+        else
+            "Human"
+    getJobDisp:->
+        if @flag == "done"
+            super
+        else
+            @game.i18n.t "roles:jobname.Human"
+    deadsunset:(game)->
+        # 変化せずに死亡した場合は蘇生を考慮して初期化する
+        if @flag == "divined"
+            @setFlag null
+    divined:(game,player)->
+        super
+        unless @flag?
+            @setFlag "divined"
+    midnight:(game,midnightSort)->
+        # 死亡していたら変化しない
+        if @flag == "divined" && !@dead
+            # 変化後を作成
+            jobnames=Object.keys(jobs).filter (name)->(name in Shared.game.teams.Human)
+            newjob=jobnames[Math.floor Math.random()*jobnames.length]
+            newpl = Player.factory newjob, game
+            @transProfile newpl
+            @transferData newpl, true
+            newpl.sunset game   # 初期化してあげる
+            # 右側に運命の子を作成（詳細表示用）
+            sub = Player.factory "Fate", game
+            @transProfile sub
+            @transferData sub
+            sub.setFlag "done"
+            newpl = Player.factory null, game, newpl, sub, Complex
+            @transProfile newpl
+            @transferData newpl, true
+
+            @transform game,newpl,false
+            log=
+                mode:"skill"
+                to:@id
+                comment: game.i18n.t "roles:Fate.changeRole", {name: @name, result: newpl.getJobDisp()}
+            splashlog game.id,game,log
+            null
+
+class Synesthete extends Player
+    type: "Synesthete"
+    midnightSort: 100
+    formType: FormType.required
+    job_target:Player.JOB_T_ALIVE | Player.JOB_T_DEAD
+    constructor:->
+        super
+        # Known set of colors initially empty
+        colorListLength = 15
+        @setFlag {
+            colorDict: {}
+            colorList: shuffle [0...colorListLength]
+        }
+    sunset:(game)->
+        @setTarget null
+    sleeping:-> @target?
+    job:(game, playerid)->
+        if @target?
+            return game.i18n.t "error.common.alreadyUsed"
+
+        pl = game.getPlayer playerid
+        unless pl?
+            return game.i18n.t "error.common.nonexistentPlayer"
+        if pl.id == @id
+            return game.i18n.t "error.common.noSelectSelf"
+
+        @setTarget playerid
+        pl.touched game, @id
+
+        log=
+            mode: "skill"
+            to: @id
+            comment: game.i18n.t "roles:Synesthete.select", {
+                name: @name
+                target: pl.name
+            }
+        splashlog game.id, game, log
+        return null
+    midnight:(game)->
+        p = game.getPlayer game.skillTargetHook.get @target
+        origpl = game.getPlayer @target
+        unless p? && origpl?
+            return
+        unless @flag?
+            return
+
+        team = p.getTeam()
+        colorIndex = @flag.colorDict[team]
+        unless colorIndex?
+            # まだ色が定義されていない
+            colorIndex = @flag.colorList[0]
+            @flag.colorList = @flag.colorList.slice 1
+            @flag.colorDict[team] = colorIndex
+
+        log=
+            mode: "skill"
+            to: @id
+            comment: game.i18n.t "roles:Synesthete.result", {
+                name: @name
+                target: origpl.name
+                result: game.i18n.t "roles:Synesthete.color.#{colorIndex}"
+            }
+        splashlog game.id, game, log
+
+class Reindeer extends Player
+    type: "Reindeer"
+    isWinner:(game, team)->
+        if team == @getTeam()
+            # 村人陣営勝利なら勝利
+            return true
+        # サンタ勝利でも勝利
+        for pl in game.players
+            santas = pl.accessByJobTypeAll "SantaClaus"
+            if santas.some((pl)-> pl.flag == "gone")
+                return true
+        return false
+
+    beforebury:(game)->
+        return false if @dead
+        santas = game.players.filter (pl)-> pl.isJobType "SantaClaus"
+        return unless santas.length
+        # サンタクロースが全滅していたら後追い
+        unless santas.some((x)->!x.dead)
+            @die game, "santasuicide"
+        return false
+    # トナカイはサンタクロースを把握
+    getVisibilityQuery:->
+        res = super
+        res.santaclauses = true
+        res
 
 # ============================
 # 処理上便宜的に使用
@@ -10647,8 +11011,8 @@ class DivineObstructed extends Complex
     cmplType:"DivineObstructed"
     sunsetAlways:(game)->
         # 一日しか守られない
-        @mcall game,@main.sunset,game
-        @sub?.sunset? game
+        @mcall game,@main.sunsetAlways,game
+        @sub?.sunsetAlways? game
         @uncomplex game
     # 占いの影響なし
     divineeffect:(game)->
@@ -10882,8 +11246,8 @@ class DivineCursed extends Complex
     cmplType:"DivineCursed"
     sunsetAlways:(game)->
         # 1日で消える
-        @mcall game,@main.sunset,game
-        @sub?.sunset? game
+        @mcall game,@main.sunsetAlways,game
+        @sub?.sunsetAlways? game
         @uncomplex game
     divined:(game,player)->
         @mcall game,@main.divined,game,player
@@ -11125,7 +11489,8 @@ class SacrificeProtected extends Complex
         if found in ["gone-day","gone-night"]
             # If this is a gone death, do not guard.
             return false
-        if @getTeam() != "Human"
+        me = game.getPlayer @id
+        if me.getTeam() != "Human"
             return false
         # 生贄先が生存していないとダメ
         sacrifice=game.getPlayer @cmplFlag
@@ -11152,6 +11517,24 @@ class SacrificeProtected extends Complex
         @mcall game, @main.sunsetAlways, game
         @sub?.sunsetAlways? game
         @uncomplex game
+
+# ガチャで票を失った状態
+# cmplFlag: 何票失っているか
+class SpentVotesForGacha extends Complex
+    cmplType:"SpentVotesForGacha"
+    voteafter:(game, target)->
+        @mcall game, @main.voteafter, game, target
+        @sub?.voteafter game,target
+        # 自分の票数を引く
+        game.votingbox.votePower this, -@cmplFlag
+    # 夜になったら消える
+    sunset:(game)->
+        @mcall game, @main.sunset, game
+        @sub?.sunset? game
+        @uncomplex game
+
+
+
 
 # 決定者
 class Decider extends Complex
@@ -11522,6 +11905,11 @@ jobs=
     Sacrifice:Sacrifice
     AbsoluteWolf:AbsoluteWolf
     Oracle:Oracle
+    NightRabbit:NightRabbit
+    GachaAddicted:GachaAddicted
+    Fate:Fate
+    Synesthete:Synesthete
+    Reindeer:Reindeer
 
     # 特殊
     GameMaster:GameMaster
@@ -11570,6 +11958,7 @@ complexes=
     SamuraiGuarded:SamuraiGuarded
     DraculaBitten:DraculaBitten
     SacrificeProtected:SacrificeProtected
+    SpentVotesForGacha:SpentVotesForGacha
 
     # 役職ごとの強さ
 jobStrength=
@@ -11705,6 +12094,11 @@ jobStrength=
     Sacrifice:14
     AbsoluteWolf:70
     Oracle:15
+    NightRabbit:32
+    GachaAddicted:10
+    Fate:6
+    Synesthete:11
+    Reindeer:7
 
 module.exports.actions=(req,res,ss)->
     req.use 'user.fire.wall'
@@ -11914,8 +12308,8 @@ module.exports.actions=(req,res,ss)->
 
                 # 村人だと思い込むシリーズは村人除外で出現しない
                 if excluded_exceptions.some((x)->x=="Human")
-                    exceptions.push "Oracle"
-                    special_exceptions.push "Oracle"
+                    exceptions.push "Oracle","Fate"
+                    special_exceptions.push "Oracle","Fate"
                 # メアリーの特殊処理（セーフティ高じゃないとでない）
                 if query.yaminabe_hidejobs=="" || (!safety.jobs && query.yaminabe_safety!="none")
                     exceptions.push "BloodyMary"
@@ -11932,6 +12326,21 @@ module.exports.actions=(req,res,ss)->
                 if safety.jingais || safety.jobs
                     exceptions.push "MadWolf"
                     special_exceptions.push "MadWolf"
+                # 闇道化
+                if safety.jingais || safety.jobs
+                    exceptions.push "DarkClown"
+                    special_exceptions.push "DarkClown"
+                # 絶対狼
+                if Math.random()<0.4
+                    exceptions.push "AbsoluteWolf"
+                    special_exceptions.push "AbsoluteWolf"
+                # 村人表記シリーズ
+                if Math.random()<0.3
+                    exceptions.push "Oracle"
+                    special_exceptions.push "Oracle"
+                if Math.random()<0.3
+                    exceptions.push "Fate"
+                    special_exceptions.push "Fate"
                 # ニートは隠し役職（出現率低）
                 if query.losemode == "on" || Math.random()<0.4
                     exceptions.push "Neet"
@@ -12039,14 +12448,17 @@ module.exports.actions=(req,res,ss)->
                         if frees <= 0
                             break
                         r = Math.random()
-                        if r<0.35 && !nonavs.Fox
+                        if r<0.3 && !nonavs.Fox
                             joblist.Fox++
                             frees--
-                        else if r < 0.55 && !nonavs.XianFox
+                        else if r < 0.5 && !nonavs.XianFox
                             joblist.XianFox++
                             frees--
-                        else if r<0.85 && !nonavs.TinyFox
+                        else if r<0.75 && !nonavs.TinyFox
                             joblist.TinyFox++
+                            frees--
+                        else if r<0.9 && !nonavs.NightRabbit
+                            joblist.NightRabbit++
                             frees--
                         else if !nonavs.Blasphemy
                             joblist.Blasphemy++
@@ -12284,6 +12696,11 @@ module.exports.actions=(req,res,ss)->
                             joblist.SantaClaus ?= 0
                             joblist.SantaClaus++
                             frees--
+                            # トナカイもいるぞ
+                            if Math.random() < 0.4 && frees > 0 && !nonavs.Reindeer
+                                joblist.Reindeer ?= 0
+                                joblist.Reindeer++
+                                frees--
                     else
                         # サンタは出にくい
                         if Math.random()<0.8
@@ -12562,7 +12979,7 @@ module.exports.actions=(req,res,ss)->
                                     if Math.random()>0.1
                                         # 90%の確率で弾く（レア）
                                         continue
-                                when "Lycan","SeersMama","Sorcerer","WolfBoy","ObstructiveMad","Satori"
+                                when "Lycan","SeersMama","Sorcerer","WolfBoy","ObstructiveMad","Satori","Fate"
                                     # 占い系がいないと入れない
                                     if joblist.Diviner==0 && joblist.ApprenticeSeer==0 && joblist.PI==0
                                         continue
@@ -12613,6 +13030,10 @@ module.exports.actions=(req,res,ss)->
                         if job == "LoneWolf"
                             # 絶対狼とは共存できない
                             if joblist.AbsoluteWolf>0
+                                continue
+                        if job == "Reindeer"
+                            # トナカイはサンタ無しで出さない
+                            if joblist.SantaClaus == 0
                                 continue
 
                         joblist[job]++
@@ -13336,6 +13757,10 @@ writeGlobalJobInfo = (game, player, result={})->
         if vq.draculaBitten
             result.draculaBitten = game.players.filter((x)->x.getAttribute PlayerAttribute.draculaBitten, game).map (x)->
                 x.publicinfo()
+        # サンタクロースが分かる
+        if vq.santaclauses
+            result.santaclauses = game.players.filter((x)->x.isJobType "SantaClaus").map (x)->
+                x.publicinfo()
 
 #job情報を
 makejobinfo = (game,player,result={})->
@@ -13449,7 +13874,7 @@ getIncludedRolesStr = (i18n, joblist, accurate)->
             num = joblist[job]
             if num > 0
                 # 村人思い込み系シリーズ含む村人をカウント
-                if !accurate && (job in ["Human","Oracle"])
+                if !accurate && (job in ["Human","Oracle","Fate"])
                     humannum += num
                 else
                     jobinfos.push "#{i18n.t "roles:jobname.#{job}"}#{num}"

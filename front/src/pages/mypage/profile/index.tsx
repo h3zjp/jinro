@@ -47,7 +47,7 @@ export const Profile: React.FunctionComponent<{
           newMailAddress !== store.profile.mail.address
             ? newMailAddress
             : undefined,
-        icon: icon !== store.profile.icon ? icon : undefined,
+        icon: icon !== store.profile.icon ? icon || '' : undefined,
         password,
       };
       const saved = await onSave(query);
@@ -106,7 +106,7 @@ export const Profile: React.FunctionComponent<{
                 : undefined
           }
         />
-        <IconEdit icon={icon} setIcon={setIcon} />
+        <IconEdit icon={icon} setIcon={setIcon} setEditing={setEditing} />
         {editing ? (
           <SaveButtonArea>
             <SubActiveButton active type="button" onClick={saveHandler}>
