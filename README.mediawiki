@@ -1,7 +1,7 @@
 == 月下人狼 ==
 Are you a werewolf?
 
-[http://jinrou.uhyohyo.net/ 月下人狼サーバー]稼働中!
+[https://jinro.h3z.jp/ 月下人狼サーバー]稼働中!
 == version ==
 1.14.22
 
@@ -104,6 +104,3 @@ To run jinrou in an isolated environment using docker-compose, enther `docker` d
 * 闇鍋
 * 一部闇鍋
 * 量子人狼
-
-
-
