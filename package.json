@@ -1,7 +1,7 @@
 {
   "name": "werewolf",
   "description": "You are a werewolf.",
-  "version": "1.14.22",
+  "version": "1.14.25",
   "author": "uhyo <uhyohyo@uhyohyohyo.sakura.ne.jp>",
   "private": false,
   "engines": {
@@ -27,6 +27,7 @@
     "nodemailer": "^2.7.2",
     "oauth": "^0.9.6",
     "pug": "^2.0.1",
+    "request": "^2.88.0",
     "socketstream": "0.3.10",
     "ss-clientjade": "0.0.5",
     "ss-jade": "^0.1.3",

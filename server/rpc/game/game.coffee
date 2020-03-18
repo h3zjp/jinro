@@ -19,12 +19,17 @@ i18n = libi18n.getWithDefaultNS "game"
 # 身代わりセーフティありのときの除外役職一覧
 SAFETY_EXCLUDED_JOBS = Shared.game.SAFETY_EXCLUDED_JOBS
 # jobs that not welcome while rebirth
-REBIRTH_EXCLUDED_JOBS = ["MinionSelector","Thief","GameMaster","Helper","QuantumPlayer","Waiting","Watching","GotChocolate","HooliganGuard","HooliganAttacker"]
+REBIRTH_EXCLUDED_JOBS = ["MinionSelector","Thief","GameMaster","Helper","QuantumPlayer","Waiting","Watching","GotChocolate","HooliganGuard","HooliganAttacker","Listener"]
 # 冒涜者によって冒涜されない役職
 BLASPHEMY_DEFENCE_JOBS = ["Fugitive","QueenSpectator","Liar","Spy2","LoneWolf","AbsoluteWolf"]
 # 占い結果すぐに分かるを無効化する役職
 DIVINER_NOIMMEDIATE_JOBS = ["WolfBoy", "ObstructiveMad", "Pumpkin", "Patissiere", "Hypnotist", "DecoyWolf"]
 
+# 配信者が獲得できる役職
+STREAMER_AVAILABLE_JOBS = [
+    "Diviner","Liar","PI","Forensic","Ninja","Synesthete",
+    "Guard","Spellcaster","Priest","Witch","Counselor","Cosplayer",
+]
 
 # フェイズの一覧
 Phase =
@@ -1855,7 +1860,7 @@ class Game
                     @i18n.t "found.leave", {name: x.name}
                 when "deathnote"
                     @i18n.t "found.body", {name: x.name}
-                when "foxsuicide", "friendsuicide", "twinsuicide", "dragonknightsuicide","vampiresuicide","santasuicide"
+                when "foxsuicide", "friendsuicide", "twinsuicide", "dragonknightsuicide","vampiresuicide","santasuicide","fascinatesuicide"
                     @i18n.t "found.suicide", {name: x.name}
                 when "infirm"
                     @i18n.t "found.infirm", {name: x.name}
@@ -1880,7 +1885,7 @@ class Game
                 if ["werewolf","werewolf2","trickedWerewolf","poison","hinamizawa",
                     "vampire","vampire2","witch","dog","trap",
                     "marycurse","psycho","curse","punish","spygone","deathnote",
-                    "foxsuicide","friendsuicide","twinsuicide","dragonknightsuicide","vampiresuicide","santasuicide"
+                    "foxsuicide","friendsuicide","twinsuicide","dragonknightsuicide","vampiresuicide","santasuicide","fascinatesuicide"
                     "infirm","hunter",
                     "gmpunish","gone-day","gone-night","crafty","greedy","tough","lunaticlover",
                     "hooligan","dragon","samurai","elemental","sacrifice"
@@ -1942,6 +1947,8 @@ class Game
                         "elemental"
                     when "sacrifice"
                         "sacrifice"
+                    when "fascinatesuicide"
+                        "fascinatesuicide"
                     else
                         null
                 if emma_log?
@@ -2797,6 +2804,7 @@ logs:[{
     "draculaskill"(ドラキュラに見える)
     "hidden"(終了後/霊界のみ見える追加情報)
     "poem"(Poetが送ったpoem)
+    "streaming"(配信者の配信)
     comment: String
     userid:Userid
     name?:String
@@ -3157,7 +3165,7 @@ class Player
 
     # ログが見えるかどうか（通常のゲーム中、個人宛は除外）
     isListener:(game,log)->
-        if log.mode in ["day","system","nextturn","prepare","monologue","heavenmonologue","skill","will","voteto","gm","gmreply","helperwhisper","probability_table","userinfo","poem"]
+        if log.mode in ["day","system","nextturn","prepare","monologue","heavenmonologue","skill","will","voteto","gm","gmreply","helperwhisper","probability_table","userinfo","poem","streaming"]
             # 全員に見える
             true
         else if log.mode in ["heaven","gmheaven"]
@@ -3167,6 +3175,8 @@ class Player
             game.rule.voteresult!="hide"    # 隠すかどうか
         else
             false
+    # 他の人に向けたログが見えるかどうか
+    isPrivateLogListener:(game, log)-> false
 
     # midnightの実行順（小さいほうが先）
     midnightSort: 100
@@ -3418,6 +3428,7 @@ class Player
     beforebury: (game,type,deads)-> false
     # 占われたとき（結果は別にとられる player:占い元）
     divined:(game,player)->
+    whenguarded:(game,player)->
     # ちょっかいを出されたとき(jobのとき)
     touched:(game,from)->
     # 選択肢を返す
@@ -3914,6 +3925,7 @@ class Guard extends Player
         pl = game.getPlayer game.skillTargetHook.get @target
         unless pl?
             return
+        pl.whenguarded game,this
         # 複合させる
         newpl=Player.factory null, game, pl,null,Guarded   # 守られた人
         pl.transProfile newpl
@@ -5707,6 +5719,7 @@ class Dog extends Player
                     # もう死んでるじゃん
                     @setTarget ""  # 洗濯済み
                 else
+                    pl.whenguarded game,this
                     newpl=Player.factory null, game, pl,null,Guarded   # 守られた人
                     pl.transProfile newpl
                     newpl.cmplFlag=@id  # 護衛元cmplFlag
@@ -5844,6 +5857,7 @@ class Trapper extends Player
         pl = game.getPlayer game.skillTargetHook.get @target
         unless pl?
             return
+        pl.whenguarded game,this
         newpl=Player.factory null, game, pl,null,TrapGuarded   # 守られた人
         pl.transProfile newpl
         newpl.cmplFlag=@id  # 護衛元cmplFlag
@@ -6564,6 +6578,7 @@ class WanderingGuard extends Player
         pl = game.getPlayer game.skillTargetHook.get @target
         unless pl?
             return
+        pl.whenguarded game,this
         newpl=Player.factory null, game, pl,null,Guarded   # 守られた人
         pl.transProfile newpl
         newpl.cmplFlag=@id  # 護衛元cmplFlag
@@ -9091,6 +9106,7 @@ class DragonKnight extends Player
         return unless pl?
 
         if @flag.type == "guard"
+            pl.whenguarded game,this
             newpl = Player.factory null, game, pl, null, Guarded
             pl.transProfile newpl
             newpl.cmplFlag = @id # 護衛元
@@ -9248,6 +9264,7 @@ class Samurai extends Player
         pl = game.getPlayer game.skillTargetHook.get @target
         unless pl?
             return
+        pl.whenguarded game,this
         # 侍の守りを複合させる
         newpl = Player.factory null, game, pl, null, SamuraiGuarded
         pl.transProfile newpl
@@ -9372,6 +9389,7 @@ class Elementaler extends Player
         pl = game.getPlayer game.skillTargetHook.get @target
         unless pl?
             return
+        pl.whenguarded game,this
         @setFlag {
             day: game.day
             playerid: pl.id
@@ -10149,6 +10167,138 @@ class Reindeer extends Player
         res.santaclauses = true
         res
 
+class Streamer extends Player
+    type: "Streamer"
+    getSpeakChoice:(game)->
+        ["streaming", "-monologue"].concat super
+    sunset:(game)->
+        unless @flag?
+            # equip self with StreamerTrial
+            @setFlag "equipped"
+            pl = game.getPlayer @id
+            newpl = Player.factory null, game, pl, null, StreamerTrial
+            pl.transProfile newpl
+            pl.transferData newpl
+            newpl.cmplFlag = @objid
+            pl.transform game, newpl, true
+            # choose Listeners
+            listenerNumber = Math.floor(game.players.length / 4)
+            alives = game.players.filter (pl)=> !pl.dead && !pl.scapegoat && pl.id != @id
+            listeners = (shuffle alives).slice 0, listenerNumber
+
+            for ls in listeners
+                sub = Player.factory "Listener", game
+                sub.flag = @id
+                ls.transProfile sub
+                ls.transferData sub
+                newpl = Player.factory null, game, ls, sub, Complex
+                ls.transProfile newpl
+                ls.transferData newpl
+                ls.transform game, newpl, true
+
+                log=
+                    mode: "skill"
+                    to: newpl.id
+                    comment: game.i18n.t "roles:Streamer.becomeListener", {
+                        name: newpl.name
+                        target: @name
+                    }
+                splashlog game.id, game, log
+            return
+    makejobinfo:(game, result)->
+        super
+        if @dead
+            result.listenerNumber = 0
+        else
+            # Count my listeners
+            listenerNumber = 0
+            for pl in game.players
+                if pl.dead
+                    continue
+                listeners = pl.accessByJobTypeAll "Listener"
+                for l in listeners
+                    if l.flag == @id
+                        listenerNumber++
+            result.listenerNumber = listenerNumber
+
+
+
+# 視聴者（配信者の処理用）
+# @flag: 配信者のid
+class Listener extends Player
+    type: "Listener"
+    isPrivateLogListener:(game, log)->
+        unless log.mode in ["skill", "streaming"]
+            return false
+        # 配信者のskillログは見える
+        if Array.isArray log.to
+            return @flag in log.to
+        else
+            return @flag == log.to
+    sunset:(game)->
+        target = game.getPlayer @flag
+        unless target?
+            return
+        unless target.isJobType "Streamer"
+            # 配信者でなくなったので視聴をやめる
+            @uncomplex game
+
+class QueenOfNight extends Madman
+    type:"QueenOfNight"
+    midnightSort:122 #人狼占いによる狂人変化が先
+    constructor:->
+        super
+        @flag="[]"
+    divined:(game,player)->
+        super
+        # リストに追加する
+        fl=try
+            JSON.parse @flag || "[]"
+        catch e
+            []
+        fl.push player.id
+        @setFlag JSON.stringify fl
+    whenguarded:(game,player)->
+        super
+        # リストに追加する
+        fl=try
+            JSON.parse @flag || "[]"
+        catch e
+            []
+        fl.push player.id
+        @setFlag JSON.stringify fl
+    sunset:(game)->
+        @setFlag "[]"
+    midnight:(game,midnightSort)->
+        fl=try
+            JSON.parse @flag || "[]"
+        catch e
+            []
+        for id in fl
+            pl=game.getPlayer id
+            if pl? && !pl.dead
+                newpl=Player.factory null, game, pl,null,Fascinated # 魅了する
+                pl.transProfile newpl
+                newpl.cmplFlag=@id # 魅了元
+                pl.transform game,newpl,true
+                log=
+                    mode:"hidden"
+                    to:-1
+                    comment: game.i18n.t "roles:QueenOfNight.FascinatePlayer", {name: @name, target: pl.name}
+                splashlog game.id,game,log
+
+class Tarzan extends Player
+    type: "Tarzan"
+    sunrise:(game)->
+        super
+        wolves = game.players.filter (x)-> !x.dead && x.isWerewolf()
+        num = wolves.length
+        log=
+            mode: "skill"
+            to: @id
+            comment: game.i18n.t "roles:Tarzan.result", {name: @name, count: num}
+        splashlog game.id, game, log
+
 # ============================
 # 処理上便宜的に使用
 class GameMaster extends Player
@@ -10610,6 +10760,8 @@ class Complex
         result
     isListener:(game,log)->
         @mcall(game,@main.isListener,game,log) || @sub?.isListener(game,log)
+    isPrivateLogListener:(game,log)->
+        @mcall(game,@main.isPrivateLogListener,game,log) || @sub?.isPrivateLogListener(game,log)
     isReviver:->@main.isReviver() || @sub?.isReviver()
     isHuman:->@main.isHuman()
     isWerewolf:->@main.isWerewolf()
@@ -11090,7 +11242,8 @@ class PhantomStolen extends Complex
     getVisibilityQuery:(game)->
         Human::getVisibilityQuery.call this, game
     dying:(game,found)->
-    voted:(game, votingbox)-> Player.prototype.voted.call this, game, votingbox
+    # Neetの能力は特例的に存続 (#653)
+    # voted:(game, votingbox)-> Player.prototype.voted.call this, game, votingbox
     voteafter:->
     makejobinfo:(game,obj)->
         super
@@ -11533,7 +11686,69 @@ class SpentVotesForGacha extends Complex
         @sub?.sunset? game
         @uncomplex game
 
+# 配信者のサブ役職管理
+# cmplFlag: 本体のobjid
+class StreamerTrial extends Complex
+    cmplType: "StreamerTrial"
+    sunset:(game)->
+        unless @isMainJobType "Streamer"
+            # I am no longer a Streamer, so remove this one
+            @mcall game, @main.sunset, game
+            @uncomplex game, false
+            return
+        # Count my listeners
+        hasListeners = false
+        for pl in game.players
+            if pl.dead
+                continue
+            listeners = pl.accessByJobTypeAll "Listener"
+            if listeners.some((pl)=> pl.flag == @id)
+                hasListeners = true
+        if hasListeners
+            @mcall game, @main.sunset, game
+            # サブ役職を交換
+            job = STREAMER_AVAILABLE_JOBS[Math.floor Math.random() * STREAMER_AVAILABLE_JOBS.length]
+            newSub = Player.factory job, game
+            @transProfile newSub
+            @transferData newSub
+            @sub = newSub
 
+            log=
+                mode: "skill"
+                to: @id
+                comment: game.i18n.t "roles:Streamer.getJob", {
+                    name: @name
+                    job: @sub.getJobDisp()
+                }
+            splashlog game.id, game, log
+            @sub.sunset game
+        else
+            # no alive listener. retire and change myself to Human.
+            newpl = Player.factory "Human", game
+            @transProfile newpl
+            @transferData newpl
+            @uncomplex game, false
+            top = game.getPlayer @id
+            main = top.accessByObjid @cmplFlag
+            main?.transform game, newpl, false
+            log=
+                mode: "skill"
+                to: @id
+                comment: game.i18n.t "roles:Streamer.retire", {
+                    name: @name
+                    job: newpl.getJobDisp()
+                }
+            splashlog game.id, game, log
+
+# 魅了された人
+class Fascinated extends Complex
+    cmplType:"Fascinated"
+    beforebury:(game,type,deads)->
+        super
+        unless @dead
+            pl=game.getPlayer @cmplFlag
+            if pl? && pl.dead
+                @die game, "fascinatesuicide"
 
 
 # 決定者
@@ -11910,6 +12125,10 @@ jobs=
     Fate:Fate
     Synesthete:Synesthete
     Reindeer:Reindeer
+    Streamer:Streamer
+    Listener:Listener
+    QueenOfNight:QueenOfNight
+    Tarzan:Tarzan
 
     # 特殊
     GameMaster:GameMaster
@@ -11959,6 +12178,8 @@ complexes=
     DraculaBitten:DraculaBitten
     SacrificeProtected:SacrificeProtected
     SpentVotesForGacha:SpentVotesForGacha
+    StreamerTrial:StreamerTrial
+    Fascinated:Fascinated
 
     # 役職ごとの強さ
 jobStrength=
@@ -12099,6 +12320,9 @@ jobStrength=
     Fate:6
     Synesthete:11
     Reindeer:7
+    Streamer:25
+    QueenOfNight:20
+    Tarzan:15
 
 module.exports.actions=(req,res,ss)->
     req.use 'user.fire.wall'
@@ -12286,6 +12510,7 @@ module.exports.actions=(req,res,ss)->
                     "GotChocolate",
                     "HooliganAttacker",
                     "HooliganGuard",
+                    "Listener",
                 ]
                 exceptions.push special_exceptions...
                 # ユーザーが指定した入れないの
@@ -13411,8 +13636,9 @@ module.exports.actions=(req,res,ss)->
 
 
             switch log.mode
-                when "monologue","heavenmonologue","helperwhisper"
+                when "monologue","heavenmonologue","helperwhisper","streaming"
                     # helperwhisper:守り先が決まっていないヘルパー
+                    # streamingの場合は自分と配信者に聞こえる
                     log.to=player.id
                 when "heaven"
                     # 霊界の発言は悪霊憑きの発言になるかも
@@ -13708,7 +13934,7 @@ islogOK=(game,player,log)->
         false
     else if log.to? && !isLogTarget(log.to, player)
         # I'm not the target of this log
-        false
+        actpl.isPrivateLogListener game, log
     else
         player.isListener game,log
 # check whether player is a target of log.

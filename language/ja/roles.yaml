@@ -142,6 +142,10 @@ jobname:
   Fate: '運命の子'
   Synesthete: '共感覚者'
   Reindeer: 'トナカイ'
+  Streamer: '配信者'
+  Listener: '視聴者'
+  QueenOfNight: '月下美人'
+  Tarzan: '野生児'
   GameMaster: 'ゲームマスター'
   Helper: 'ヘルパー'
   Waiting: '待機中'
@@ -704,6 +708,8 @@ Emma:
     vampiresuicide: '{{name}}は吸血鬼の後を追って死亡したようです。'
     # Suicided after Santaclause
     santasuicide: '{{name}}はサンタクロースの後を追って死亡したようです。'
+    # Suicided after QueenOfNight
+    fascinatesuicide: '{{name}}は何かに取り憑かれて自ら命を断ったようです。'
     # Killed by hooligan
     hooligan: '{{name}}は暴動者たちに殺されたようです。'
     # Killed by DragonKnight
@@ -896,6 +902,18 @@ Synesthete:
     - 金色
     - 銀色
     - 灰色
+
+Streamer:
+  becomeListener: '{{name}}は{{target}}の視聴者になりました。'
+  getJob: '{{name}}は今夜は{{job}}をやってみることにしました。'
+  retire: '{{name}}は視聴者がいなくなり引退して{{job}}になりました。'
+
+QueenOfNight:
+  FascinatePlayer: '{{name}}により{{target}}の心は搔き乱されました。'
+
+Tarzan:
+  # Result of skill.
+  result: '{{name}}は{{count}}人の人狼の気配を感じました。'
 
 GameMaster:
   # Failed to revive.
