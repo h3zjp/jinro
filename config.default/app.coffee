@@ -2,6 +2,7 @@ module.exports =
   name: "月下人狼"
   # HTTP server
   http:
+    ip: "0.0.0.0"
     port: 8800
     secure: null
     # if not null, serve HTTPS.

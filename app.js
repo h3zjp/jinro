@@ -171,7 +171,7 @@ function runService(server) {
   const db = require('./server/db.coffee');
   db.dbinit(() => {
     // Start application
-    server.listen(Config.http.port);
+    server.listen(Config.http.port, Config.http.ip);
     ss.start(server);
   });
 }
