@@ -3,7 +3,7 @@
 # description of app at the top.
 app:
   # description of app
-  description: '月下人狼は完全無料・リアルタイムチャット・高い自由度が特徴のオンライン人狼サーバーです。'
+  description: '月下人狼は完全無料･リアルタイムチャット･高い自由度が特徴のオンライン人狼サーバーです。'
   # link to features.
   featuresLink: '特徴をもっと見る'
   # error message shown on login failure.
@@ -22,9 +22,9 @@ signup:
     summaryClosed: '注意事項を開く'
     notice1: 'ユーザーIDには半角英数とアンダーバーを使用できます。'
     notice2: 'ユーザーIDは一度決めたら変更できません。'
-    notice3: '⚠ 必ず、他のWebサイトで使用していないパスワードを設定して下さい! ⚠'
+    notice3: '⚠ 他のWebサイトで使用していないパスワードを設定して下さい!'
     notice4: 'マニュアルの{{link}}もご覧下さい。'
-    manualLink: '禁止行為・注意事項'
+    manualLink: '禁止行為･注意事項'
 
 footer:
 
@@ -33,7 +33,7 @@ featuresTitle: 月下人狼の特徴
 # it is a list of objects, and are used programatically.
 features:
   - icon: hand-holding-usd
-    title: 完全無料・無制限
+    title: 完全無料･無制限
     description:
       - 月下人狼は完全無料です。無料で全ての機能を無制限に利用できます。
   - icon: comments
@@ -50,7 +50,7 @@ features:
     title: 豊富な役職
     description:
       - 月下人狼は役職が多いのも特徴です。
-      - 人狼・占い師などのいつもの役職はもちろん、月下人狼では100種類以上のさまざまな役職を取り揃えています。
+      - 人狼･占い師などのいつもの役職はもちろん、月下人狼では100種類以上のさまざまな役職を取り揃えています。
       - もちろん組み合わせも自由に設定できます。役職を組み合わせて自分だけの村を作ってみましょう。
   - icon: cog
     title: 設定項目も豊富
@@ -82,5 +82,5 @@ features:
   - icon: award
     title: 称号を集めよう
     description:
-      - 遊んだ村の数や、役職ごとの勝利数・敗北数に応じて称号が手に入ります。
+      - 遊んだ村の数や、役職ごとの勝利数･敗北数に応じて称号が手に入ります。
       - たくさん称号を集めて自分の肩書きを豪華にしましょう。
