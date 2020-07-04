@@ -1,5 +1,68 @@
+@charset "utf-8"
 // Example Stylus file
 // All changes are detected and automatically compiled into CSS
+
+@font-face {
+  font-family: "Koruri";
+  src: local('Koruri-Light'),
+  url('https://media.h3z.jp/fonts/Koruri-Light.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/Koruri-Light.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/Koruri-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Koruri";
+  src: local('Koruri-Regular'),
+  url('https://media.h3z.jp/fonts/Koruri-Regular.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/Koruri-Regular.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/Koruri-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Koruri";
+  src: local('Koruri-Semibold'),
+  url('https://media.h3z.jp/fonts/Koruri-Semibold.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/Koruri-Semibold.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/Koruri-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Koruri";
+  src: local('Koruri-Bold'),
+  url('https://media.h3z.jp/fonts/Koruri-Bold.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/Koruri-Bold.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/Koruri-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Koruri";
+  src: local('Koruri-Extrabold'),
+  url('https://media.h3z.jp/fonts/Koruri-Extrabold.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/Koruri-Extrabold.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/Koruri-Extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Takao P明朝";
+  src: local('Takao P明朝'),
+  url('https://media.h3z.jp/fonts/TakaoPMincho.woff2') format('woff2'),
+  url('https://media.h3z.jp/fonts/TakaoPMincho.woff') format('woff'),
+  url('https://media.h3z.jp/fonts/TakaoPMincho.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @import 'helpers'
 
@@ -9,8 +72,11 @@ body, html
   height 100%
 
 body
-  font normal 1em sans-serif
   //vertical-gradient #eee, #fff
+  font-family "Koruri", Sans-Serif
+  font-weight 400
+  font-style normal
+  font-size 1em
   margin-left 20px
   margin-right 0
   scroll-behavior smooth
@@ -52,6 +118,11 @@ small
 strong
   font-weight bold
 
+button
+  font-family 'Koruri', Sans-Serif
+  font-weight 400
+  font-style normal
+
 fieldset
   border 1px dashed #888888
   padding 0.8em
@@ -89,8 +160,8 @@ body > header
     flex auto 0 0
     display inline-block
     margin 0
-    font-family 'Takao明朝',serif
-    font-size 2em
+    font-family 'Takao P明朝',serif
+    font-size 1.8em
     text-shadow  1px 1px 1px rgba(200,200,200,0.4)
     a
       text-decoration none
