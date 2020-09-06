@@ -1312,23 +1312,28 @@ class Game
             @checkWerewolfTarget()
 
             # Fireworks should be lit at just before sunset.
-            x = @players.filter((pl)->pl.isJobType("Pyrotechnist") && pl.accessByJobType("Pyrotechnist")?.flag == "using")
+            x = @players.filter((pl)->pl.isJobType("Pyrotechnist"))
             if x.length
                 # Pyrotechnist should break the blockade of Threatened.sunset
-                # Show a fireworks log.
-                log=
-                    mode:"system"
-                    comment: @i18n.t "roles:Pyrotechnist.affect"
-                splashlog @id, this, log
+                onfire = false
                 # complete job of Pyrotechnist.
                 for pyr in x
-                    pyr.accessByJobType("Pyrotechnist").setFlag "done"
+                    for pyr_sub in pyr.accessByJobTypeAll "Pyrotechnist"
+                        if pyr_sub.flag == "using"
+                            onfire = true
+                            pyr_sub.setFlag "done"
+                            # Show a fireworks log.
+                            log=
+                                mode:"system"
+                                comment: @i18n.t "roles:Pyrotechnist.affect"
+                            splashlog @id, this, log
                 # 全员花火の虜にしてしまう
-                for pl in @players
-                    newpl=Player.factory null, this, pl,null,WatchingFireworks
-                    pl.transProfile newpl
-                    newpl.cmplFlag=x[0].id
-                    pl.transform this,newpl,true
+                if onfire
+                    for pl in @players
+                        newpl=Player.factory null, this, pl,null,WatchingFireworks
+                        pl.transProfile newpl
+                        newpl.cmplFlag=x[0].id
+                        pl.transform this,newpl,true
 
             @runSunset()
 
@@ -3279,13 +3284,6 @@ class Player
     isMainJobType:(type)->@isJobType type
     # jobのtargetとして適切かどうか調べる
     isFormTarget:(jobtype)-> jobtype == @type
-    #An access to @flag, etc.
-    accessByJobType:(type)->
-        unless type
-            throw "there must be a JOBTYPE"
-        if @isJobType(type)
-            return this
-        null
     # access all sub-jobs by jobtype.
     # Returns array.
     accessByJobTypeAll:(type, subonly)->
@@ -10428,6 +10426,101 @@ class Lorelei extends Player
             pl.die game, "lorelei", @id
             @addGamelog game,"loreleikill",null,pl.id
 
+class Gambler extends Player
+    type: "Gambler"
+    formType: FormType.optional
+    constructor:->
+        super
+        @setFlag {
+            # number of stocked votes
+            stock: 0
+            # whether to bet on today's vote (boolean | null)
+            bet: null
+        }
+    jobdone:(game)-> @flag.bet? || !Phase.isDay(game.phase)
+    chooseJobDay:(game)-> true
+    makeJobSelection:(game, isvote)->
+        unless isvote
+            return [
+                {
+                    name: game.i18n.t('roles:Gambler.form.keep')
+                    value: "keep"
+                }
+                {
+                    name: game.i18n.t('roles:Gambler.form.bet')
+                    value: "bet"
+                }
+            ]
+        else
+            return super
+    job:(game, playerid, query)->
+        if @flag.bet?
+            return game.i18n.t "error.common.alreadyUsed"
+        unless Phase.isDay(game.phase)
+            return game.i18n.t "error.common.cannotUseSkillNow"
+        unless playerid in ["keep", "bet"]
+            return game.i18n.t "error.common.invalidSelection"
+
+        isBet = playerid == "bet"
+        @setFlag {
+            stock: @flag.stock
+            bet: isBet
+        }
+
+        log=
+            mode: "skill"
+            to: @id
+            comment: if isBet
+                game.i18n.t "roles:Gambler.bet", { name: @name }
+            else
+                game.i18n.t "roles:Gambler.keep", { name: @name }
+        splashlog game.id, game, log
+    sunset:(game)->
+        if @flag.bet
+            @setFlag {
+                stock: 0
+                bet: @flag.bet
+            }
+    sunrise:(game)->
+        # 選択状況初期化
+        @setFlag {
+            stock: @flag.stock + 1
+            bet: null
+        }
+    voteafter:(game, target)->
+        super
+        if @flag.bet
+            game.votingbox.votePower this, @flag.stock - 1
+        else
+            game.votingbox.votePower this, -1
+    makejobinfo:(game, result)->
+        super
+        result.gamblerStock = @flag.stock
+
+class Faker extends Gambler
+    type: "Faker"
+    team: "Werewolf"
+
+class SealWolf extends Werewolf
+    type: "SealWolf"
+    voteafter:(game, target)->
+        super
+        myIndex = game.players.findIndex (pl)=> pl.id == @id
+        left = if myIndex > 0
+            game.players[myIndex - 1]
+        else
+            game.players[game.players.length - 1]
+        right = if myIndex < game.players.length - 1
+            game.players[myIndex + 1]
+        else
+            game.players[0]
+        if left.dead
+            game.votingbox.votePower this, 1
+        if right.dead
+            game.votingbox.votePower this, 1
+
+
+
 # ============================
 # 処理上便宜的に使用
 class GameMaster extends Player
@@ -10708,19 +10801,6 @@ class Complex
     isMainJobType:(type)-> @main.isMainJobType type
     getTeam:-> @main.getTeam()
     getTeamDisp:-> @main.getTeamDisp()
-    #An access to @main.flag, etc.
-    accessByJobType:(type)->
-        unless type
-            throw "there must be a JOBTYPE"
-        unless @isJobType(type)
-            return null
-        if @main.isJobType(type)
-            return @main.accessByJobType(type)
-        else
-            unless @sub?
-                return null
-            return @sub.accessByJobType(type)
-        null
     accessByJobTypeAll:(type, subonly)->
         unless type
             throw "there must be a JOBTYPE"
@@ -12307,6 +12387,9 @@ jobs=
     RemoteWorker:RemoteWorker
     IntuitionWolf:IntuitionWolf
     Lorelei:Lorelei
+    Gambler:Gambler
+    Faker:Faker
+    SealWolf:SealWolf
 
     # 特殊
     GameMaster:GameMaster
@@ -12508,6 +12591,7 @@ jobStrength=
     RemoteWorker:10
     IntuitionWolf:50
     Lorelei:12
+    Gambler:15
 
 module.exports.actions=(req,res,ss)->
     req.use 'user.fire.wall'
