@@ -43,6 +43,8 @@ const peers: Array<keyof RolePeersInfo> = allElements<keyof RolePeersInfo>()([
   'absolutewolves',
   'santaclauses',
   'loreleis',
+  'bonds',
+  'spaceWerewolfImposters',
 ]);
 /**
  * Keys of RoleOtherPlayerInfo for use in JobInfo.

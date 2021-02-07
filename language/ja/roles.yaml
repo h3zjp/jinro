@@ -154,6 +154,19 @@ jobname:
   Gambler: 'ギャンブラー'
   Faker: 'イカサマ師'
   SealWolf: '印狼'
+  CynthiaWolf: '月狼'
+  Trickster: '悪戯妖精'
+  Sleepwalker: '夢遊病者'
+  Disguised: '仮装者'
+  Oni: '鬼'
+  Saint: '御子'
+  NetherWolf: '冥狼'
+  DarkWolf: '闇狼'
+  SpaceWerewolfCrew: 'クルー'
+  SpaceWerewolfImposter: '詐欺師'
+  SpaceWerewolfObserver: '観察者'
+  SpaceWerewolfGuard: '見張り'
+  SpaceWerewolfSabotage: '破壊者'
   GameMaster: 'ゲームマスター'
   Helper: 'ヘルパー'
   Waiting: '待機中'
@@ -191,6 +204,7 @@ fortune:
   werewolf: '人狼'
   vampire: 'ヴァンパイア'
   pumpkin: 'かぼちゃ'
+  oni: '鬼'
 
 # Psychic result.
 psychic:
@@ -198,6 +212,7 @@ psychic:
   werewolf: '人狼'
   BigWolf: '大狼'
   TinyFox: '子狐'
+  oni: '鬼'
   # delimiter of multiple result in chemical.
   _delimiter: '×'
 
@@ -513,6 +528,8 @@ ObstructiveMad:
   select: '{{name}}が{{target}}を邪魔しました。'
   # a Diviner is blocked.
   blocked: '{{name}}が{{target}}を占いましたが、何者かに邪魔されました。'
+  # SpaceWerewolfObserver is blocked
+  spaceWerewolfObserverBlocked: '{{name}}は何者かの妨害を受けて{{target}}の観察に失敗しました。'
 
 TroubleMaker:
   # Select to make a trouble.
@@ -731,6 +748,8 @@ Emma:
     sacrifice: '{{name}}は生贄に捧げられたようです。'
     # Lorelei
     lorelei: '{{name}}は怨嗟の歌声に導かれたようです。'
+    # Killed by Oni
+    oni: '{{name}}は鬼に攫われたようです。'
 
 EyesWolf:
   # EyesWolf result strings
@@ -945,6 +964,43 @@ Gambler:
   bet: '{{name}}は賭けに出ました。'
   keep: '{{name}}は賭けに出ませんでした。'
 
+CynthiaWolf:
+  affected: '{{target}}は{{name}}の放つ月のオーラに魅せられました。'
+
+Trickster:
+  # First select.
+  select1: '{{name}}は絆を結ぶ1人目に{{target}}を選びました。'
+  select2: '{{name}}は絆を結ぶ2人目に{{target}}を選びました。'
+  # Error: select another player
+  noSelectTwice: 'もう一人別の人を選んでください。'
+  # Select a target.
+  select: '{{name}}は{{target}}に運命の絆を結びました。'
+  # Became a lover.
+  become: '{{name}}は運命の絆を結びました。'
+
+Sleepwalker:
+  awake: '{{name}}は深夜徘徊を自覚しました。'
+
+Oni:
+  select: '{{name}}は{{target}}を攫おうとしています。'
+
+Saint:
+  select: '{{name}}は{{target}}に奇蹟の力を使います。'
+
+# Werewolf
+SpaceWerewolfImposter:
+  # Selected a target.
+  select: '{{name}}たち詐欺師は{{target}}に狙いを定めました。'
+
+SpaceWerewolfObserver:
+  # Selected a target.
+  select: '{{name}}は{{target}}を観察しました。'
+  resultImposter: '{{name}}が{{target}}を観察したところ、{{target}}は裏切り者でした。'
+  resultNotImposter: '{{name}}が{{target}}を観察したところ、{{target}}は裏切り者ではありませんでした。'
+
+SpaceWerewolfGuard:
+  select: '{{name}}は{{target}}を護衛しました。'
+
 GameMaster:
   # Failed to revive.
   reviveFail: 'プレイヤーを蘇生できませんでした。'
@@ -1020,6 +1076,16 @@ FanOfIdol:
 LoreleiFamilia:
   name: 'ローレライのしもべ'
   jobname: 'ローレライのしもべ（{{jobname}}）'
+
+MoonPhilia:
+  # name for desc
+  name: '月狂病'
+  # jobname
+  jobname: '月狂病（{{jobname}}）'
+
+Bonds:
+  name: '絆'
+  jobname: '{{jobname}}（絆）'
 
 Decider:
   jobname: '{{jobname}}（決定者）'

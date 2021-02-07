@@ -118,6 +118,12 @@ module.exports =
     game:
       # game speak comment
       comment: 4096
+  # game-related config
+  game:
+    # config for Poet
+    Poet:
+      # style of poem (number of characters per line)
+      poemStyle: [5, 7, 5]
   # Experimental feature: logging (boolean)
   logging: false
   # Language Settings
@@ -144,3 +150,24 @@ module.exports =
   shareButton:
     # set this to true to enable share via Twitter button.
     twitter: true
+  # settings for the report form.
+  reportForm:
+    # set this to false to use the report form.
+    enable: true
+    # mail address to which content of report form is sent.
+    mail: "someone@example.com"
+    # subject of mail
+    mailSubject: "月下人狼 Report Form"
+    # categories available in the report form.
+    # leave this empty to not show a category selection control.
+    categories: [
+      {
+        name: "Bug report"
+        description: "select this to report a bug."
+      }
+      {
+        name: "abuse"
+        description: "select this to report a malicious user."
+      }
+    ]
+
