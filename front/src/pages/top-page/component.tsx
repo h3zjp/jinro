@@ -129,8 +129,9 @@ export const TopPage = ({ i18n, onLogin, onSignup }: Props) => {
               <NoticeUl>
                 <li>{i18n.t('top_client:signup.notice.notice1')}</li>
                 <li>{i18n.t('top_client:signup.notice.notice2')}</li>
+                <li>{i18n.t('top_client:signup.notice.notice3')}</li>
                 <li>
-                  <I18nInterp ns="top_client" k="signup.notice.notice3">
+                  <I18nInterp ns="top_client" k="signup.notice.notice4">
                     {{
                       link: (
                         <a href="/manual/prohibited">
@@ -149,15 +150,7 @@ export const TopPage = ({ i18n, onLogin, onSignup }: Props) => {
           </FormWrapper>
           <Features i18n={i18n} ref={featuresSectionRef} />
         </ContentsWrapper>
-        <Footer>
-          <p>
-            {i18n.t('top_client:footer.text')} (
-            <a href="http://github.com/uhyo/jinrou" target="_blank">
-              {i18n.t('top_client:footer.github')}
-            </a>
-            )
-          </p>
-        </Footer>
+        <Footer />
       </AppWrapper>
     </I18nProvider>
   );

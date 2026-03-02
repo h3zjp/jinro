@@ -6,6 +6,8 @@ html
     meta#viewport-meta(name="viewport",content="width=device-width,initial-scale=1")
     meta(name="application-name",content=Config.name)
     meta(name="description",content=i18n.t('description'))
+    link(rel="dns-prefetch",href="//media.h3z.jp")
+    link(rel="dns-prefetch",href="//log-ana.h3z.jp")
     link(rel="icon",sizes="16x16",href="/favicon.ico")
     link(rel="icon",sizes="144x144",href="/icons/icon-144x144.png")
     if Array.isArray(Config.additionalMeta)
@@ -29,6 +31,20 @@ html
             location.href = !{JSON.stringify(notSupportedPage)};
         }
     != SocketStream
+    script
+      var _paq = window._paq = window._paq || [];
+      _paq.push(["disableCookies"]);
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="https://log-ana.h3z.jp/";
+        _paq.push(['setTrackerUrl', u+'a.php']);
+        _paq.push(['setSiteId', '6']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'a.js'; s.parentNode.insertBefore(g,s);
+      })();
+    noscript
+      <img referrerpolicy="no-referrer-when-downgrade" src="https://log-ana.h3z.jp/a.php?idsite=6&amp;rec=1" style="border:0" alt="" />
   body
     header
       h1
@@ -53,6 +69,8 @@ html
               a(href="/backdoor/home")= i18n.t('home')
             li
               a(href="/manual/about")= i18n.t('about')
+            li
+              a(href="/manual/changelog") 更新履歴
             li
               a(href="/my/settings")= i18n.t('settings')
         #toolbar

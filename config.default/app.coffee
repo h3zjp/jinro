@@ -2,6 +2,7 @@ module.exports =
   name: "月下人狼"
   # HTTP server
   http:
+    ip: "0.0.0.0"
     port: 8800
     secure: null
     # if not null, serve HTTPS.
@@ -31,6 +32,8 @@ module.exports =
     pass: "test"
   redis:
     host: "127.0.0.1"
+    port: 6379
+    db: 0
 
   admin:
     # 管理者権限を行使する際のパスワード
