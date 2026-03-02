@@ -129,9 +129,8 @@ export const TopPage = ({ i18n, onLogin, onSignup }: Props) => {
               <NoticeUl>
                 <li>{i18n.t('top_client:signup.notice.notice1')}</li>
                 <li>{i18n.t('top_client:signup.notice.notice2')}</li>
-                <li>{i18n.t('top_client:signup.notice.notice3')}</li>
                 <li>
-                  <I18nInterp ns="top_client" k="signup.notice.notice4">
+                  <I18nInterp ns="top_client" k="signup.notice.notice3">
                     {{
                       link: (
                         <a href="/manual/prohibited">
@@ -141,6 +140,7 @@ export const TopPage = ({ i18n, onLogin, onSignup }: Props) => {
                     }}
                   </I18nInterp>
                 </li>
+                <li>{i18n.t('top_client:signup.notice.notice4')}</li>
               </NoticeUl>
             </Details>
             <ErrorLine>
