@@ -8,7 +8,7 @@ transporter = nodemailer.createTransport(Config.smtpConfig)
 
 # setup e-mail data with unicode symbols
 mailOptions =
-    from: "\"月下人狼\" <#{Config.smtpConfig.from ? Config.smtpConfig.auth.user}>" # sender address
+    from: "\"月下人狼 ななみん鯖\" <#{Config.smtpConfig.from}>" # sender address
 
 # ユーザーにメールを送る
 sendMail=(userquery, makemailobj, callback)->
@@ -20,7 +20,7 @@ sendMail=(userquery, makemailobj, callback)->
             callback "ユーザー情報に誤りがあります", null
             return
         if record.mail?.timestamp? && Date.now() < record.mail.timestamp + 5*60*1000
-            callback "まだメールによる確認を行えません。5分以上後に再度お試しください。", null
+            callback "まだメールによる確認を行えません。5分以上経過後に再度お試し下さい。", null
             return
 
         # tokenを生成
@@ -62,8 +62,8 @@ sendMail=(userquery, makemailobj, callback)->
         if mail.error?
             # why didn't stop? what happened?
             # report bug automatically
-            mailOptions.subject = "月下人狼：Bug report"
-            mailOptions.to = Config.smtpConfig.from ? Config.smtpConfig.auth.user
+            mailOptions.subject = "月下人狼 ななみん鯖：Bug report"
+            mailOptions.to = Config.smtpConfig.from
             # mailOptions.text = "query:\n#{JSON.stringify(query)}\n\nrecord.mail:\n#{JSON.stringify(record.mail)}\n"
             mailOptions.text = String(mail.error)
             mailOptions.html = mailOptions.text
@@ -113,7 +113,7 @@ sendMail=(userquery, makemailobj, callback)->
 # raw API for other server systems
 exports.sendRawMail = (to, subject, body, callback)->
     options =
-        from: "\"月下人狼\" <#{Config.smtpConfig.from ? Config.smtpConfig.auth.user}>"
+        from: "\"月下人狼 ななみん鯖\" <#{Config.smtpConfig.from}>"
         subject: subject
         to: to
         text: body
@@ -121,7 +121,7 @@ exports.sendRawMail = (to, subject, body, callback)->
 
 sendConfirmMail=(query, req, res, ss)->
     unless /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/.test(query.mail) || query.mail == ""
-        res {error:"有効なメールアドレスを入力してください"}
+        res {error:"有効なメールアドレスを入力して下さい"}
         return
 
     userquery =
@@ -143,14 +143,14 @@ sendConfirmMail=(query, req, res, ss)->
             mail.for = "confirm"
 
             options.to = mail.new
-            options.subject = "月下人狼: メールアドレスの確認"
+            options.subject = "月下人狼 ななみん鯖：メールアドレスの確認"
         else if !query.mail
             mail.address = record.mail.address
             mail.verified = record.mail.verified
             mail.for = "remove"
 
             options.to = mail.address
-            options.subject = "月下人狼: メールアドレス削除の確認"
+            options.subject = "月下人狼 ななみん鯖：メールアドレス削除の確認"
         else if record.mail.address != query.mail && record.mail.verified
             mail.address = record.mail.address
             mail.new = query.mail
@@ -158,7 +158,7 @@ sendConfirmMail=(query, req, res, ss)->
             mail.for="change"
 
             options.to = mail.new
-            options.subject = "月下人狼: メールアドレス変更の確認"
+            options.subject = "月下人狼 ななみん鯖：メールアドレス変更の確認"
         else
             # ?????
             mail.error = "query:\n#{JSON.stringify(query)}\n\nrecord.mail:\n#{JSON.stringify(record.mail)}\n"
@@ -168,21 +168,21 @@ sendConfirmMail=(query, req, res, ss)->
             }
 
         options.text = """#{req.session.userId} 様
-このメールアドレス「#{if mail.for=='remove' then mail.address else mail.new}」は、「月下人狼」のアカウント#{if mail.for=='remove' then 'から削除' else 'に登録'}されました。
-#{if mail.for=='remove' then '削除' else '登録'}を完了するには、以下のURLにアクセスしてください。URLは1時間の間有効です。
+このメールアドレス「#{if mail.for=='remove' then mail.address else mail.new}」は、「月下人狼 ななみん鯖」のアカウント#{if mail.for=='remove' then 'から削除' else 'に登録'}されました。
+#{if mail.for=='remove' then '削除' else '登録'}を完了するには、以下のURLにアクセスして下さい。URLは1時間の間有効です。
 #{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}
 
-このメールに心当たりがない場合、このメールを無視し、URLにアクセスしないでください。
-このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。
+このメールに心当たりがない場合、このメールを無視し、URLにアクセスしないで下さい。
+このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。
 """
         options.html = """<p>#{req.session.userId} 様</p>
-<p>このメールアドレス「#{if mail.for=='remove' then mail.address else mail.new}」は、「月下人狼」のアカウント#{if mail.for=='remove' then 'から削除' else 'に登録'}されました。</p>
-<p>#{if mail.for=='remove' then '削除' else '登録'}を完了するには、以下のURLにアクセスしてください。URLは1時間の間有効です。</p>
+<p>このメールアドレス「#{if mail.for=='remove' then mail.address else mail.new}」は、「月下人狼 ななみん鯖」のアカウント#{if mail.for=='remove' then 'から削除' else 'に登録'}されました。</p>
+<p>#{if mail.for=='remove' then '削除' else '登録'}を完了するには、以下のURLにアクセスして下さい。URLは1時間の間有効です。</p>
 <p><a href="#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}">#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}</a></p>
 
-<p>このメールに心当たりがない場合、このメールを無視し、URLにアクセスしないでください。</p>
+<p>このメールに心当たりがない場合、このメールを無視し、URLにアクセスしないで下さい。</p>
 <hr>
-<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。</p>
+<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。</p>
 """
         return {
             mail: mail
@@ -200,7 +200,7 @@ sendConfirmMail=(query, req, res, ss)->
 
         req.session.user = record
         req.session.save ->
-            record.info="メールアドレス#{if record.mail.for == 'remove' then '削除' else '変更'}のためのメールが 「#{if record.mail.for=='remove' then record.mail.address else record.mail.new}」に送信されました。メールに記載されたURLから処理を完了してください。"
+            record.info="メールアドレス#{if record.mail.for == 'remove' then '削除' else '変更'}のためのメールが 「#{if record.mail.for=='remove' then record.mail.address else record.mail.new}」に送信されました。メールに記載されたURLから処理を完了して下さい。"
             res record
 
 sendResetMail = (query, req, res, ss)->
@@ -220,25 +220,25 @@ sendResetMail = (query, req, res, ss)->
 
         options.text = """#{query.userid} 様
 
-「月下人狼」のアカウントのパスワード再設定がリクエストされました。
-以下のURLにアクセスして再設定を完了してください。
+「月下人狼 ななみん鯖」のアカウントのパスワード再設定がリクエストされました。
+以下のURLにアクセスして再設定を完了して下さい。
 #{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}
 
-このメールに心当たりがない場合、このメールは無視してください。
+このメールに心当たりがない場合、このメールは無視して下さい。
 URLにアクセスしなければ設定は変更されません。
 
-このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。
+このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。
 """
         options.html = """<p>#{query.userid} 様</p>
 
-<p>「月下人狼」のアカウントのパスワード再設定がリクエストされました。</p>
-<p>以下のURLにアクセスして再設定を完了してください。</p>
+<p>「月下人狼 ななみん鯖」のアカウントのパスワード再設定がリクエストされました。</p>
+<p>以下のURLにアクセスして再設定を完了して下さい。</p>
 <p><a href="#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}">#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}</a></p>
 
-<p>このメールに心当たりがない場合、このメールは無視してください。</p>
+<p>このメールに心当たりがない場合、このメールは無視して下さい。</p>
 <p>URLにアクセスしなければ設定は変更されません。</p>
 <hr>
-<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。</p>
+<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。</p>
 """
         return {
             mail: mail
@@ -251,7 +251,7 @@ URLにアクセスしなければ設定は変更されません。
         if err?
             res {error: String(err)}
             return
-        record.info="「#{query.mail}」にパスワード再設定用のメールを送信しました。メールの指示に従って再設定を完了してください。"
+        record.info="「#{query.mail}」にパスワード再設定用のメールを送信しました。メールの指示に従って再設定を完了して下さい。"
 
         res record
 
@@ -270,25 +270,25 @@ sendMailconfirmsecurityMail=(query,req,res,ss)->
 
         options.text = """#{query.userid} 様
 
-「月下人狼」の設定「パスワード・メールアドレスをロック」の解除がリクエストされました。
-この設定変更を完了するには、以下のURLにアクセスしてください。
+「月下人狼 ななみん鯖」の設定「パスワード･メールアドレスをロック」の解除がリクエストされました。
+この設定変更を完了するには、以下のURLにアクセスして下さい。
 #{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}
 
-このメールに心当たりがない場合、このメールは無視してください。
+このメールに心当たりがない場合、このメールは無視して下さい。
 URLにアクセスしなければ設定は変更されません。
 
-このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。
+このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。
 """
         options.html = """<p>#{query.userid} 様</p>
 
-<p>「月下人狼」の設定「パスワード・メールアドレスをロック」の解除がリクエストされました。</p>
-<p>この設定変更を完了するには、以下のURLにアクセスしてください。</p>
+<p>「月下人狼 ななみん鯖」の設定「パスワード･メールアドレスをロック」の解除がリクエストされました。</p>
+<p>この設定変更を完了するには、以下のURLにアクセスして下さい。</p>
 <p><a href="#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}">#{Config.application.url}my?token=#{mail.token}&timestamp=#{mail.timestamp}</a></p>
 
-<p>このメールに心当たりがない場合、このメールは無視してください。</p>
+<p>このメールに心当たりがない場合、このメールは無視して下さい。</p>
 <p>URLにアクセスしなければ設定は変更されません。</p>
 <hr>
-<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承ください。</p>
+<p>このメールは送信専用アドレスから送信されているため、返信いただいても対応いたしかねます。ご了承下さい。</p>
 """
         return {
             mail: mail
@@ -299,7 +299,7 @@ URLにアクセスしなければ設定は変更されません。
         if err?
             res {error: String(err)}
             return
-        record.info="「#{record.mail.address}」に設定変更用のメールを送信しました。メールの指示に従って設定変更を完了してください。"
+        record.info="「#{record.mail.address}」に設定変更用のメールを送信しました。メールの指示に従って設定変更を完了して下さい。"
 
         res record
 
