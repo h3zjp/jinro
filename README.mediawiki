@@ -1,13 +1,14 @@
 == 月下人狼 ==
 Are you a werewolf?
 
-[http://jinrou.uhyohyo.net/ 月下人狼サーバー]稼働中!
+[https://jinro.h3z.jp/ 月下人狼サーバー]稼働中!
 == version ==
-1.15.1
+v1.15.1+260302
 
 == requirements ==
 * Redis
 * MongoDB >= 6.0
+* Node.js == 14
 
 == usage ==
 # Copy the source code
@@ -53,7 +54,7 @@ To build the docker image for jinrou, run `docker build .` in the project direct
 To run jinrou in an isolated environment using docker-compose, enther `docker` directory and run `docker-compose up --build`. This starts the jinrou docker image along with mongodb and redis Docker containers. The `docker/config.docker` directory contains a config file for running jinrou in this environment.
 
 == jobs ==
-全80種くらい?
+全100種以上はあると思います。
 
 === 基本 ===
 * 村人
@@ -104,6 +105,3 @@ To run jinrou in an isolated environment using docker-compose, enther `docker` d
 * 闇鍋
 * 一部闇鍋
 * 量子人狼
-
-
-
